@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+		
+<link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:600" rel="stylesheet"> 
+		
+<meta charset="utf-8">
+		
+<title>birthday wishes for *****</title>
+		
+<link rel="stylesheet" href="style.css">
+		
+<script src="script.js"></script>
+	
+</head>
+	
+
+<h1 align="center">HAPPY BIRTHDAY BHANU IN ADVANCE</h1>
+
+<script>
+
+
+class SplitFlapDisplay
+
+{
+	
+
+	
+constructor(segments, alphabet, parentNode=null)
+{
+		
+//Input Assertion
+		
+if(!Number.isInteger(segments)||segments<1)
+			
+throw new Error("Illegal value for 'segments' argument! Positive Integer expected.");
+		
+if(typeof alphabet != "string")
+			
+throw new Error("Illegal value for 'alphabet' argument! String expected.");
+		
+if(parentNode && !parentNode instanceof Node)
+			
+throw new Error("Illegal value for 'parentNode' argument! Node-Object expected.");
+
+	
+this.segments = segments;
+
+	
+
+
+//Remove possible duplicates in given alphabet and add space
+		
+
+
+this.alphabet = [...new Set(alphabet)].join("");
+	
+if(!this.alphabet.includes(" ")){
+		
+this.alphabet = " "+this.alphabet;
+		
+}
+
+		
+//Initialize Display, usually with spaces
+		
+this.txt = this.alphabet[0].repeat(this.segments);
+
+		
+//Set up HTML-DOM structure
+		
+this.display = document.createElement("div");
+		
+this.display.classList.add("split-flap-display");
+		
+this.letters = [];
+		
+for(let i=0;i<this.segments;i++){
+			
+let letter = document.createElement("div");
+			
+letter.classList.add("letter");
+			
+this.display.appendChild(letter);
+			
+let textContent = document.createElement("span");
+			
+letter.appendChild(textContent);
+			
+textContent.textContent = this.txt[i];
+			
+textContent.setAttribute("target-letter",this.txt[i]);
+			
+this.letters.push(letter);
+		
+}
+
+		
+//append to DOM if parent node is given
+		
+if(parentNode)
+{
+			
+parentNode.appendChild(this.display)
+		
+}
+
+
+
+	}
+	
+	
+
+
+static getCustom(txt,parentNode=null)
+{
+		
+
+//Get maximum word length
+		
+
+
+let words = txt.split(" ");
+		
+let segments = Math.max(...words.map(x=>x.length));
+		
+let alphabet = txt.split("").sort().join("");
+		
+return new SplitFlapDisplay(segments,alphabet,parentNode)
+	
+}
+
+	
+
+
+/**
+	 * Scrolls display to given text. Overflow will be ignored.
+	 
+* @param {String} txt Text to be displayed
+	
+ * @return {Promise} Fulfilled, when the animation ends
+	 */
+
+
+
+
+setText(txt)
+{
+	
+	
+
+
+//Array of Promises, each being fulfilled at the end of an animation.
+	
+
+
+let animations = [];
+
+		
+
+//Prepare String to be at least of length segments
+		
+
+txt = (""+txt).padEnd(this.segments);
+
+		
+
+	for(let i=0;i<this.segments;i++)
+	{
+			
+		let char = txt[i];
+		
+	
+		if(char != this.txt[i])
+		{
+
+				
+		//Display missing chars as empty space
+		
+		
+			if(!this.alphabet.includes(char))
+			{
+
+				char = " ";
+				
+			}
+
+				
+
+			//Generate list of letters that need to be iterated over
+				
+
+
+			let regEx = new RegExp(this.txt[i]+".*?"+char);
+				
+			let flaps = regEx.exec(this.alphabet.repeat(2))[0];
+
+				
+
+			//DOM management (animations and flapper creation)
+				
+
+			this.txt = this.txt.substr(0, i) + char + this.txt.substr(i+1);
+				
+
+			this.letters[i].firstElementChild.setAttribute("target-letter",char);
+				
+			for(let j=0;j<flaps.length-1;j++)
+			{
+					
+				let flapper = document.createElement("div");
+					
+				flapper.classList.add("flapper");
+					
+				flapper.setAttribute("front-value",flaps[j]);
+					
+				flapper.setAttribute("back-value",flaps[j+1]);
+					
+				flapper.style.setProperty("--flap-number",j);
+					
+				this.letters[i].appendChild(flapper);
+					
+				let that = this;
+					
+				let done = new Promise(async function(resolve){
+						
+				flapper.addEventListener('animationend', function() {
+							
+				this.customEvent?this.customEvent():null;
+						
+			});
+
+						
+			await new Promise(res2 => flapper.customEvent = res2);
+						
+			await new Promise(res2 => flapper.customEvent = res2);
+
+						
+		if(j==0)
+		{
+							
+			that.letters[i].firstElementChild.textContent = char;
+						
+		}
+						
+flapper.parentNode.removeChild(flapper);
+						
+resolve();
+					
+});
+
+					
+animations.push(done);
+				
+}
+			
+}
+		
+}
+		
+return Promise.all(animations);
+
+}
+
+
+
+
+
+	
+
+
+
+async readText(txt,delay=1)
+{
+		
+let center = screen => " ".repeat(~~((this.segments - screen.length) / 2)) + screen;
+
+		
+
+//Create screen array
+		
+
+let words = txt.split(" ");
+		
+let screens = [];
+		
+let newScreen = "";
+		
+for(let word of words)
+{
+			
+if(!newScreen)
+{
+				
+newScreen = word;
+
+			
+}else if(this.segments > (newScreen+word).length)
+{
+				
+newScreen += " "+word;
+			
+}
+else
+{
+				
+screens.push(center(newScreen));
+				
+newScreen = word;
+			
+}
+		
+}
+		
+screens.push(center(newScreen));
+
+		
+
+//Display screens consecutively
+		
+
+for(let screen of screens)
+{
+			
+await this.setText(screen);
+			
+await new Promise(resolve => window.setTimeout(resolve, 1000*delay));
+
+}
+	
+}
+
+}
+
+
+window.onload = async function()
+{
+	
+
+//Simple example of the classes capabilities
+	
+let text = "HAPPY BIRTHDAY BHANU IN ADVANCE";
+	
+let sfDisplay = SplitFlapDisplay.getCustom(text,document.getElementById("parent"));
+	
+while(true){
+		await sfDisplay.readText(text, 0.5);
+		
+await new Promise(resolve => window.setTimeout(resolve, 3000));
+	}
+}
+
+
+
+
+</script>
+<style> 
+.split-flap-display
+{
+	background-color: var(--color-back1);
+	
+display: inline-block;
+
+	padding: .2rem;
+	
+font-family: 'Source Code Pro', monospace;
+
+	
+/*Customize*/
+	font-size: 10vw;
+	
+color: white;
+
+
+/*Sololearn, you really should update your syntax highlighting...*/ 
+
+
+	
+--flap-duration: 0.7s;
+	
+--flap-offset: 0.15s;
+
+--color-back1: #272822;
+	
+--color-back2: #373832;
+	
+--color-back2-lightened: #474842;
+
+}
+
+
+.letter{
+
+background-color: var(--color-back2);
+	
+position: relative;
+	
+display: inline-block;
+	
+white-space: pre;
+	
+width: 1em;
+	
+text-align: center;
+	
+perspective: 5em;
+	
+margin: 0.1em;
+}
+
+.letter>span::after
+{
+	
+content: attr(target-letter);
+	
+display: block;
+	position: absolute;
+	
+width: 100%;
+	height: 50%;
+	
+overflow: hidden;
+	top: 0;
+	
+background-color: var(--color-back2);
+
+}
+
+
+
+
+
+.flapper
+{
+	
+display: contents;
+	
+z-index: 1;
+	
+position: absolute;
+	
+top: 0;
+	width: 100%;
+	height: 100%;
+	
+
+
+/*--flap-number*/
+
+
+
+}
+
+
+.flapper::before,.flapper::after
+{
+	
+display: block;
+	position: absolute;
+	
+width: 100%;
+	height: 50%;
+	overflow: hidden;
+	
+color: inherit;
+	visibility: hidden;
+}
+
+.flapper::before
+{
+	
+content: attr(front-value);
+	
+animation: turn calc(var(--flap-duration) / 2) ease-in calc(var(--flap-offset) * var(--flap-number));
+	
+transform-origin: bottom;
+	
+top: 0;
+	z-index: calc(1000 - var(--flap-number));
+}
+
+.flapper::after{
+	content: attr(back-value);
+	
+line-height: 0;
+	bottom: 0;
+	
+animation: turn-back calc(var(--flap-duration) / 2) ease-out calc(var(--flap-offset) * var(--flap-number) + var(--flap-duration) / 2);
+
+
+transform-origin: top;
+	z-index: calc(var(--flap-number) + 2);
+
+}
+
+
+@keyframes turn
+{
+	
+from{
+		transform: rotateX( 0deg);
+	
+	background-color: var(--color-back2);
+	
+	visibility: visible;
+	}
+
+	to{
+		
+transform: rotateX(-90deg);
+		
+background-color: var(--color-back2-lightened);
+	
+	visibility: visible;
+	}
+
+}
+
+
+
+
+@keyframes turn-back
+{
+	
+from
+{
+		transform: rotateX(90deg);
+	
+	background-color: var(--color-back2-lightened);
+		
+visibility: visible;
+	
+}
+
+
+	to{
+		transform: rotateX(0deg);
+		
+background-color: var(--color-back2);
+		
+visibility: visible;
+	
+}
+
+
+}
+
+
+
+/*Not related to SplitFlapDisplay*/
+
+
+body{margin: 0}
+#parent{
+	height: 100vh;
+	
+text-align: center;
+	
+background: linear-gradient(to bottom,#25A0AD,#A3B95D);
+	
+overflow: hidden;
+}
+#parent>div{
+	position: absolute;
+	
+top: 50%;
+	
+transform: translate(-50%, -50%);
+	
+box-shadow: .1em .1em .2em .1em rgba(0,0,0,0.4);
+	
+white-space: nowrap;
+	
+border-radius: .1em;
+
+}
+</style>
+
+<body>
+		
+<div id="parent">
+</div>
+
+
+</body>
+
+</html>
